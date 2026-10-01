@@ -131,14 +131,31 @@ A driver offering a pre-planned car ride sets how many seats they have
 - Single-seat offers (all bikes, all instant offers) behave exactly as
   before — the offer itself becomes the booking.
 
-## Running tests
+## Testing
+
+**1. Unit tests** (no database, no server, a few seconds):
 
 ```bash
 ./mvnw test -Dtest=RideServiceTest
 ```
 
-Pure Mockito unit tests — no database or running server needed.
-(`PilliongoApplicationTests` boots the full app, so it needs MySQL and `.env`.)
+Covers seat rules, booking, double-booking, cancelling and the ride lifecycle.
+(`PilliongoApplicationTests` boots the whole app, so it needs MySQL and `.env`.)
+
+**2. API failure checks** (backend must be running on :8080):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tests\api-checks.ps1
+```
+
+Hits the live API with bad input, missing/fake tokens, wrong roles, broken
+JSON, overbooking, etc., and prints PASS/FAIL for each. Part B asks for a
+verified rider + driver login and cleans up the test ride it creates.
+
+**Error contract** — every error is JSON `{"message": "..."}` with:
+400 bad input / broken rule · 401 not logged in or session expired ·
+403 not allowed · 404 not found · 409 someone else changed it first ·
+503 email service down · 500 only for real bugs (details go to the log, not the client).
 
 ## API endpoints
 

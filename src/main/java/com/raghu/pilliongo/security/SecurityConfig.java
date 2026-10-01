@@ -1,5 +1,7 @@
 package com.raghu.pilliongo.security;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,10 +48,26 @@ public class SecurityConfig {
                         .requestMatchers("/api/rides/**").authenticated()
                         .anyRequest().authenticated()
                 )
+                // Without these, Spring Security answers a missing/expired
+                // token with an empty 403 — so the frontend could never tell
+                // "your session expired, log in again" (401) apart from
+                // "you're logged in but not allowed" (403).
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> writeJson(res, 401,
+                                "Please log in. Your session is missing or has expired."))
+                        .accessDeniedHandler((req, res, e) -> writeJson(res, 403,
+                                "You don't have permission to do this.")))
                 .addFilterBefore(jwtFilter,
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    private static void writeJson(HttpServletResponse res, int status, String message) throws java.io.IOException {
+        res.setStatus(status);
+        res.setContentType("application/json");
+        res.setCharacterEncoding("UTF-8");
+        res.getWriter().write("{\"message\":\"" + message + "\"}");
     }
 
     @Bean
