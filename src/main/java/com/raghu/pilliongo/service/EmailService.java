@@ -1,6 +1,7 @@
 package com.raghu.pilliongo.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -11,8 +12,18 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
+    // Sender address shown on every email. With Gmail this was filled in
+    // automatically from the login, but Brevo's login is an
+    // @smtp-brevo.com address, so the sender must be set explicitly.
+    @Value("${app.mail.from}")
+    private String fromAddress;
+
+    @Value("${app.mail.support-inbox}")
+    private String supportInbox;
+
     public void sendOtpEmail(String toEmail, String otp) {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromAddress);
         message.setTo(toEmail);
         message.setSubject("PillionGo - Email Verification OTP");
         message.setText(
@@ -26,6 +37,7 @@ public class EmailService {
 
     public void sendPasswordResetEmail(String toEmail, String fullName, String otp) {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromAddress);
         message.setTo(toEmail);
         message.setSubject("PillionGo - Password Reset OTP");
         message.setText(
@@ -46,7 +58,8 @@ public class EmailService {
     public void sendSupportNotification(String fromUserName, String fromUserEmail, String subject, String messageBody) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo("pilliongo.app@gmail.com");
+            message.setFrom(fromAddress);
+            message.setTo(supportInbox);
             message.setSubject("[PillionGo Support] New message: " + subject);
             message.setText(
                     "New in-app support message received.\n\n" +
@@ -69,6 +82,7 @@ public class EmailService {
     public void sendSupportReplyEmail(String toEmail, String fullName, String subject, String originalMessage, String reply) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromAddress);
             message.setTo(toEmail);
             message.setSubject("PillionGo Support - Re: " + subject);
             message.setText(

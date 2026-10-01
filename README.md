@@ -85,7 +85,7 @@ git-ignored. Real OS/IDE environment variables with the same names override it.
 |---|---|
 | `DB_PASSWORD` | MySQL password |
 | `JWT_SECRET` | Signs/verifies JWT auth tokens (use 32+ random chars) |
-| `MAIL_PASSWORD` | Gmail **app password** for sending OTP emails |
+| `MAIL_PASSWORD` | Brevo **SMTP key** for sending OTP emails |
 
 If any of these is missing, the backend fails at startup with a
 "Could not resolve placeholder" error — that's deliberate.
