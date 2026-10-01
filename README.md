@@ -1,22 +1,29 @@
 # PillionGo
 
-PillionGo is a full-stack ride-sharing web app built for students at LPU (Lovely
-Professional University) and the surrounding Phagwara/Jalandhar area. It connects
-riders who need a lift with drivers heading the same way, for both "right now"
-instant rides and pre-planned scheduled trips — the kind of informal
-carpooling/pillion-riding that already happens around campus, but with accounts,
-a bulletin board of offers, in-app fare estimates, and a basic safety layer
-(verified emails, visible driver/vehicle details, admin oversight) instead of
-random WhatsApp groups.
+PillionGo is a full-stack, peer-to-peer ride-sharing web app for anyone, anywhere.
+It connects riders who need a lift with drivers already heading the same way,
+for both "right now" instant rides and pre-planned scheduled trips, so people
+can share bikes and cars and split the cost of the journey.
+
+It replaces the informal carpooling people already do through random chat
+groups with real accounts, a public board of ride offers, upfront fare
+estimates, multi-seat bookings, and a basic safety layer: verified emails,
+visible driver and vehicle details, live location during a ride, an SOS
+button and admin oversight.
 
 ## Why this exists
 
-Students around campus frequently need short rides to the bus stand, the
-railway station, or nearby towns, and often coordinate this informally and
+Every day, people travel the same routes alone, while others on those exact
+routes are looking for a ride, whether that's to the bus stand, the railway
+station, work, college or the next town. Lifts get arranged informally and
 unsafely (hitchhiking, unverified strangers). PillionGo gives that same
-peer-to-peer ride-sharing a proper account system, a public planned-rides
-board, and a way for a rider to see who's driving them (name, phone, vehicle)
-before they get in.
+ride-sharing a proper account system, a public planned-rides board, and a way
+for a rider to see who's driving them (name, phone, vehicle) before they get in.
+
+The app ships with a starter set of locations and fare zones (around
+Phagwara and Jalandhar, Punjab, where it was first built and tested). Admins
+can add new locations and fares from the admin panel, so it works for any
+city or region.
 
 ## Tech stack
 
