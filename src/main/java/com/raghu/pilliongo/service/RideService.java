@@ -29,6 +29,7 @@ public class RideService {
     private final RouteLocationRepository routeLocationRepository;
     private final VehicleRepository vehicleRepository;
     private final NotificationService notificationService;
+    private final DistanceService distanceService;
 
     // helper — get current user from email
     private User getCurrentUser(String email) {
@@ -168,7 +169,7 @@ public class RideService {
         if (fixedFare != null) {
             return fixedFare;
         }
-        return FareCalculator.calculateFare(pickup, destination);
+        return distanceService.fare(pickup, destination);
     }
 
     private Double lookupFixedFare(String pickup, String destination) {

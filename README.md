@@ -1,5 +1,7 @@
 # PillionGo
 
+[![Backend CI](https://github.com/RAGHUPALNATI/pilliongo-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/RAGHUPALNATI/pilliongo-backend/actions/workflows/ci.yml)
+
 PillionGo is a full-stack, peer-to-peer ride-sharing web app for anyone, anywhere.
 It connects riders who need a lift with drivers already heading the same way,
 for both "right now" instant rides and pre-planned scheduled trips, so people

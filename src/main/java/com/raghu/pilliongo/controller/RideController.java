@@ -2,6 +2,7 @@ package com.raghu.pilliongo.controller;
 
 import com.raghu.pilliongo.dto.RideRequest;
 import com.raghu.pilliongo.dto.RideResponse;
+import com.raghu.pilliongo.service.DistanceService;
 import com.raghu.pilliongo.service.RideService;
 import com.raghu.pilliongo.util.FareCalculator;
 import jakarta.validation.Valid;
@@ -20,6 +21,8 @@ import java.util.Map;
 public class RideController {
 
     private final RideService rideService;
+
+    private final DistanceService distanceService;
 
     // RIDER — create ride
     @PostMapping
@@ -88,7 +91,7 @@ public class RideController {
             @RequestParam String from,
             @RequestParam String to) {
         double fare = rideService.calculateFare(from, to);
-        double distanceKm = FareCalculator.getDistance(from, to);
+        double distanceKm = distanceService.distanceKm(from, to);
         return ResponseEntity.ok(Map.of(
                 "fare", fare,
                 "distanceKm", distanceKm

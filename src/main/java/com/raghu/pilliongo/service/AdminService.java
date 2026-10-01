@@ -40,12 +40,13 @@ public class AdminService {
     private final SupportMessageRepository supportMessageRepository;
     private final LocationRequestRepository locationRequestRepository;
     private final SosService sosService;
+    private final DistanceService distanceService;
 
     // Distance lookup used to move here from a copy-pasted DISTANCE_MAP —
     // now delegates to the single shared FareCalculator (see util package)
     // that RideService also uses, so both stay in sync.
-    public static double getRideDistance(String pickup, String destination) {
-        return FareCalculator.getDistance(pickup, destination);
+    public double getRideDistance(String pickup, String destination) {
+        return distanceService.distanceKm(pickup, destination);
     }
 
     // get all users (never return passwords) with distanceTraveled (km)

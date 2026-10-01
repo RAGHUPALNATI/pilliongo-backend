@@ -1,0 +1,26 @@
+# Runs on every push and pull request: compiles the backend and runs the
+# unit tests. PilliongoApplicationTests is skipped because it boots the
+# whole app and needs a real MySQL database and secrets.
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Compile and run unit tests
+        run: |
+          chmod +x mvnw
+          ./mvnw -B test -Dtest='!PilliongoApplicationTests' -Dsurefire.failIfNoSpecifiedTests=false

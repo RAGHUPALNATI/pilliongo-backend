@@ -37,6 +37,7 @@ class RideServiceTest {
     @Mock RouteLocationRepository routeLocationRepository;
     @Mock VehicleRepository vehicleRepository;
     @Mock NotificationService notificationService;
+    @Mock DistanceService distanceService;
 
     @InjectMocks RideService rideService;
 

@@ -18,6 +18,11 @@ public class FareCalculator {
     private static final double DEFAULT_DISTANCE_KM = 5.0;
     private static final String HUB = "LPU University Main Gate";
 
+    // Real roads wind; ~1.3x the straight-line distance is the usual
+    // rule of thumb for city/regional trips.
+    private static final double ROAD_FACTOR = 1.3;
+    private static final double MIN_MAP_DISTANCE_KM = 1.0;
+
     // A guessed distance between two spokes off the hub is never trusted
     // completely — floored so two different places never price as if
     // they were next door, capped so a bad guess can't run away high.
@@ -102,11 +107,27 @@ public class FareCalculator {
     // / lookupFixedFare), so a case you know this estimate gets wrong is
     // one admin action away from being exactly right, permanently.
     public static double getDistance(String pickup, String destination) {
+        return getDistance(pickup, destination, null, null);
+    }
+
+    // Same, but with optional map positions {lat, lng} for each end. Order:
+    //   1. a hand-verified pair in DISTANCE_MAP (most trusted)
+    //   2. MAP DISTANCE: straight-line distance between the two positions
+    //      x ROAD_FACTOR (roads are never straight). This is what makes
+    //      any city in the world work: give its places a map position and
+    //      fares just work, no distance table needed.
+    //   3. the LPU hub-difference estimate, 4. the flat default (below).
+    public static double getDistance(String pickup, String destination, double[] from, double[] to) {
         if (pickup == null || destination == null) return DEFAULT_DISTANCE_KM;
         String key1 = pickup + "-" + destination;
         String key2 = destination + "-" + pickup;
         if (DISTANCE_MAP.containsKey(key1)) return DISTANCE_MAP.get(key1);
         if (DISTANCE_MAP.containsKey(key2)) return DISTANCE_MAP.get(key2);
+
+        if (from != null && to != null) {
+            double km = haversineKm(from[0], from[1], to[0], to[1]) * ROAD_FACTOR;
+            return Math.round(Math.max(MIN_MAP_DISTANCE_KM, km) * 10.0) / 10.0;
+        }
 
         Double hubToPickup = distanceFromHub(pickup);
         Double hubToDestination = distanceFromHub(destination);
@@ -124,6 +145,21 @@ public class FareCalculator {
     }
 
     public static double calculateFare(String pickup, String destination) {
-        return BASE_FARE + (getDistance(pickup, destination) * RATE_PER_KM);
+        return fareForDistance(getDistance(pickup, destination));
+    }
+
+    public static double fareForDistance(double km) {
+        return BASE_FARE + (km * RATE_PER_KM);
+    }
+
+    // Great-circle distance between two lat/lng points, in km.
+    public static double haversineKm(double lat1, double lng1, double lat2, double lng2) {
+        double r = 6371.0;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return 2 * r * Math.asin(Math.sqrt(a));
     }
 }

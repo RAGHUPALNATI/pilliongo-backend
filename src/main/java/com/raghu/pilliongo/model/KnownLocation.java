@@ -27,6 +27,13 @@ public class KnownLocation {
     @Column(nullable = false, unique = true)
     private String name;
 
+    // Map position. Optional: when BOTH ends of a ride have one, the fare
+    // uses the real distance between them (see DistanceService), so a new
+    // city works without anyone hand-typing a distance table. Filled in by
+    // an admin, either typed or auto-found via OpenStreetMap.
+    private Double latitude;
+    private Double longitude;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

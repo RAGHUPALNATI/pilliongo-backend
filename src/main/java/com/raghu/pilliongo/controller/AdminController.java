@@ -3,6 +3,7 @@ package com.raghu.pilliongo.controller;
 import com.raghu.pilliongo.model.KnownLocation;
 import com.raghu.pilliongo.model.RouteLocation;
 import com.raghu.pilliongo.service.AdminService;
+import com.raghu.pilliongo.service.LocationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,6 +19,7 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
+    private final LocationService locationService;
 
     @GetMapping("/users")
     public ResponseEntity<List<Map<String, Object>>> getAllUsers() {
@@ -99,6 +101,41 @@ public class AdminController {
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
         return ResponseEntity.ok(adminService.renameKnownLocation(id, body.get("name")));
+    }
+
+    // Add a new place (any city). Body: {name, latitude?, longitude?}.
+    // Without coordinates it's auto-located on OpenStreetMap if possible.
+    @PostMapping("/known-locations")
+    public ResponseEntity<KnownLocation> addKnownLocation(@RequestBody Map<String, Object> body) {
+        return ResponseEntity.ok(locationService.addKnown(
+                (String) body.get("name"), toDouble(body.get("latitude")), toDouble(body.get("longitude"))));
+    }
+
+    // Set (or clear, with nulls) a place's map position by hand.
+    @PutMapping("/known-locations/{id}/coordinates")
+    public ResponseEntity<KnownLocation> setKnownLocationCoordinates(
+            @PathVariable Long id, @RequestBody Map<String, Object> body) {
+        return ResponseEntity.ok(locationService.setCoordinates(
+                id, toDouble(body.get("latitude")), toDouble(body.get("longitude"))));
+    }
+
+    @PostMapping("/known-locations/{id}/geocode")
+    public ResponseEntity<KnownLocation> geocodeKnownLocation(@PathVariable Long id) {
+        return ResponseEntity.ok(locationService.geocode(id));
+    }
+
+    @PostMapping("/known-locations/geocode-missing")
+    public ResponseEntity<Map<String, Object>> geocodeMissingLocations() {
+        return ResponseEntity.ok(locationService.geocodeMissing());
+    }
+
+    private static Double toDouble(Object v) {
+        if (v == null || String.valueOf(v).isBlank()) return null;
+        try {
+            return Double.valueOf(String.valueOf(v).trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Coordinates must be numbers, e.g. 31.2536");
+        }
     }
 
     @DeleteMapping("/known-locations/{id}")
