@@ -5,7 +5,10 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 @Entity
-@Table(name="otp_verifications")
+// OTPs are always looked up by email (latest one first).
+@Table(name="otp_verifications", indexes = {
+        @Index(name = "idx_otp_email", columnList = "email")
+})
 @Getter
 @Setter
 @NoArgsConstructor

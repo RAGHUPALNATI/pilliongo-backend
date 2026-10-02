@@ -11,7 +11,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/driver")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class DriverController {
 
     private final DriverService driverService;

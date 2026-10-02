@@ -12,7 +12,12 @@ import java.time.LocalDateTime;
 // someone has the app open, which is what actually matters for keeping
 // this cheap to store long-term.
 @Entity
-@Table(name = "notifications")
+// The bell badge asks "how many unread for this user?" every few seconds
+// for every logged-in person, so that lookup gets its own index.
+@Table(name = "notifications", indexes = {
+        @Index(name = "idx_notifications_recipient_read", columnList = "recipient_id, is_read"),
+        @Index(name = "idx_notifications_recipient_created", columnList = "recipient_id, created_at")
+})
 @Getter
 @Setter
 @NoArgsConstructor

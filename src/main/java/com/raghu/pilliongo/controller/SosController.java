@@ -14,7 +14,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/sos")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class SosController {
 
     private final SosService sosService;

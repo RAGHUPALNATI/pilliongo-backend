@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -58,17 +57,18 @@ public class RideService {
     }
 
     // helper — auto expire instant rides older than 15 minutes
-    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 10000)
+    // Asks the database for ONLY the instant rides that are already past
+    // their 15 minutes (normally none), instead of loading every open ride
+    // and checking each one in Java. This runs on a timer and at the start
+    // of most ride requests, so it has to be cheap.
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 30000)
     public void checkAndExpireInstantRides() {
-        List<Ride> requestedRides = rideRepository.findByStatus(Ride.RideStatus.REQUESTED);
-        LocalDateTime now = LocalDateTime.now();
-        for (Ride r : requestedRides) {
-            if (r.getRideType() == Ride.RideType.INSTANT && r.getCreatedAt() != null) {
-                if (r.getCreatedAt().plusMinutes(15).isBefore(now)) {
-                    r.setStatus(Ride.RideStatus.EXPIRED);
-                    rideRepository.save(r);
-                }
-            }
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(15);
+        List<Ride> expired = rideRepository.findByStatusAndRideTypeAndCreatedAtBefore(
+                Ride.RideStatus.REQUESTED, Ride.RideType.INSTANT, cutoff);
+        for (Ride r : expired) {
+            r.setStatus(Ride.RideStatus.EXPIRED);
+            rideRepository.save(r);
         }
     }
 
@@ -323,16 +323,19 @@ public class RideService {
 
     // RIDER — book a seat on a driver-posted offer (planned route OR instant
     // "driving right now" offer)
-    // SERIALIZABLE isolation makes this transaction behave as if it ran
-    // alone: if two riders try to book the same offer at the same instant,
-    // the DB forces one of them to wait/retry instead of both reading
-    // status=REQUESTED and both succeeding.
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    // Double-booking protection comes from Ride's @Version column: every
+    // booking updates the offer row, and if two riders do that at the same
+    // instant the database accepts only the first; the second fails with
+    // an optimistic-lock error (shown to the user as "someone else just
+    // updated this ride, try again") and the whole transaction rolls back.
+    // This works the same on MySQL and on TiDB, which does not support the
+    // SERIALIZABLE isolation level this used to ask for.
+    @Transactional
     public RideResponse bookDriverOffer(Long rideId, String email) {
         return bookDriverOffer(rideId, 1, email);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional
     public RideResponse bookDriverOffer(Long rideId, Integer requestedSeats, String email) {
         User rider = getCurrentUser(email);
 
@@ -459,9 +462,8 @@ public class RideService {
         }
 
         return rideRepository
-                .findByStatus(Ride.RideStatus.REQUESTED)
+                .findByStatusAndDriverIsNull(Ride.RideStatus.REQUESTED)
                 .stream()
-                .filter(r -> r.getDriver() == null)
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -555,10 +557,9 @@ public class RideService {
     // getPlannedRides() for the planned-route marketplace)
     public List<RideResponse> getAvailableInstantOffers() {
         checkAndExpireInstantRides();
-        return rideRepository.findByRideType(Ride.RideType.INSTANT)
+        return rideRepository
+                .findByRideTypeAndStatusAndDriverIsNotNullAndRiderIsNull(Ride.RideType.INSTANT, Ride.RideStatus.REQUESTED)
                 .stream()
-                .filter(r -> r.getStatus() == Ride.RideStatus.REQUESTED)
-                .filter(r -> r.getDriver() != null && r.getRider() == null)
                 .filter(r -> r.seatsRemaining() > 0)
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -568,11 +569,9 @@ public class RideService {
     public List<RideResponse> getPlannedRides() {
         checkAndExpireInstantRides();
         return rideRepository
-                .findByRideType(Ride.RideType.PLANNED)
+                .findByRideTypeAndStatusAndScheduledDateGreaterThanEqual(
+                        Ride.RideType.PLANNED, Ride.RideStatus.REQUESTED, LocalDate.now())
                 .stream()
-                .filter(r -> r.getStatus() == Ride.RideStatus.REQUESTED)
-                .filter(r -> r.getScheduledDate() != null
-                        && !r.getScheduledDate().isBefore(LocalDate.now()))
                 // a driver offer with every seat taken drops off the board
                 .filter(r -> r.getRider() != null || r.seatsRemaining() > 0)
                 .map(this::toResponse)
@@ -580,10 +579,10 @@ public class RideService {
     }
 
     // DRIVER — accept a ride
-    // Same reasoning as bookDriverOffer(): SERIALIZABLE is what actually
+    // Same reasoning as bookDriverOffer(): the @Version check is what
     // prevents two drivers from both accepting the same REQUESTED ride.
     @PreAuthorize("hasRole('DRIVER')")
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional
     public RideResponse acceptRide(Long rideId, String email) {
         DriverProfile driver = getCurrentDriver(email);
 

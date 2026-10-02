@@ -16,7 +16,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/driver/vehicles")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class VehicleController {
 
     private final VehicleService vehicleService;

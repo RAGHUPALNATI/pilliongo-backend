@@ -125,6 +125,30 @@ a normal role and update it in the database:
 UPDATE users SET role = 'ADMIN', email_verified = true WHERE email = 'you@example.com';
 ```
 
+## Deploying
+
+Everything environment-specific is a setting, so the same code runs on your
+laptop and on a host. Set these environment variables on the host:
+
+| Variable | Example | What it is |
+|---|---|---|
+| `DB_URL` | `jdbc:mysql://<host>:4000/pilliongo?sslMode=VERIFY_IDENTITY` | Database address (MySQL, or MySQL-compatible TiDB Cloud) |
+| `DB_USERNAME` | `xxxx.root` | Database user |
+| `DB_PASSWORD` | | Database password |
+| `DB_POOL_SIZE` | `5` | Open connections (keep small on free database plans) |
+| `JWT_SECRET` | | Long random string |
+| `MAIL_PASSWORD` | | Brevo SMTP key |
+| `CORS_ALLOWED_ORIGINS` | `https://pilliongo.vercel.app` | Your frontend's address(es), comma-separated |
+
+`PORT` is read automatically if the host provides it. Tables and indexes
+are created on first start (`ddl-auto=update`).
+
+On the frontend host, set `NEXT_PUBLIC_API_URL` to `https://<your-backend>/api`.
+
+**Built to stay cheap under load:** the screens refresh every 10-15 seconds
+(and not at all in a background tab), the hot queries fetch only the rows
+they need, and those lookups are indexed.
+
 ## Multi-seat carpooling
 
 A driver offering a pre-planned car ride sets how many seats they have

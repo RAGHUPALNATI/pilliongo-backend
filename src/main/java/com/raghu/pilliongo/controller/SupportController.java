@@ -13,7 +13,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/support")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class SupportController {
 
     private final SupportService supportService;
