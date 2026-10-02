@@ -1,0 +1,11 @@
+target/
+.git/
+.github/
+.env
+.env.*
+*.log
+tests/
+deploy/
+README.md
+HELP.md
+.idea/

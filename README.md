@@ -143,6 +143,32 @@ laptop and on a host. Set these environment variables on the host:
 `PORT` is read automatically if the host provides it. Tables and indexes
 are created on first start (`ddl-auto=update`).
 
+### Running on your own server (Docker)
+
+Every push to `main` that passes the tests builds a Docker image and
+publishes it to `ghcr.io/raghupalnati/pilliongo-backend`. The `deploy/`
+folder has everything a server needs:
+
+| File | What it does |
+|---|---|
+| `setup-server.sh` | One-time setup of a fresh Ubuntu server: swap, Docker, app files |
+| `docker-compose.yml` | Runs the backend plus Caddy, which provides HTTPS automatically |
+| `Caddyfile` | Tells Caddy which address to secure and where the backend is |
+| `.env.example` | The settings to fill in on the server |
+
+```bash
+# on the server, once
+curl -fsSL https://raw.githubusercontent.com/RAGHUPALNATI/pilliongo-backend/main/deploy/setup-server.sh | bash
+cd ~/pilliongo && nano .env
+docker compose pull && docker compose up -d
+
+# to update after a new push
+cd ~/pilliongo && docker compose pull && docker compose up -d
+```
+
+`GET /api/health` answers `{"status":"ok"}` without login, for checking the
+server is up.
+
 On the frontend host, set `NEXT_PUBLIC_API_URL` to `https://<your-backend>/api`.
 
 **Built to stay cheap under load:** the screens refresh every 10-15 seconds

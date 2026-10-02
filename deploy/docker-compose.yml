@@ -1,0 +1,36 @@
+# Runs PillionGo's backend on a single small server.
+#   app   - the Spring Boot backend (image built by GitHub Actions)
+#   caddy - sits in front, gives the app a secure https:// address and
+#           renews the certificate automatically
+#
+# Start / update:   docker compose pull && docker compose up -d
+# See logs:         docker compose logs -f app
+# Stop:             docker compose down
+
+services:
+  app:
+    image: ghcr.io/raghupalnati/pilliongo-backend:latest
+    restart: unless-stopped
+    env_file: .env          # secrets and settings, see .env.example
+    mem_limit: 700m         # keep Java inside what a 1 GB server can spare
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data     # certificates live here, survive restarts
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -24,3 +24,30 @@ jobs:
         run: |
           chmod +x mvnw
           ./mvnw -B test -Dtest='!PilliongoApplicationTests' -Dsurefire.failIfNoSpecifiedTests=false
+
+  # After the tests pass on main, package the backend as a Docker image
+  # and store it in GitHub's container registry. The server then just
+  # downloads the finished image; it never has to compile anything.
+  image:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/raghupalnati/pilliongo-backend:latest
+            ghcr.io/raghupalnati/pilliongo-backend:${{ github.sha }}
